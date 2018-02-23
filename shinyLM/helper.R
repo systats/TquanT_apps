@@ -29,7 +29,7 @@ plot_plane <- function(data, surface){
   axis_x2 <- seq(0, 10, by = graph_reso)
   
   p <- plotly::plot_ly(
-    dat,
+    data,
     x = ~ x1,
     y = ~ x2,
     z = ~ y,
@@ -40,7 +40,7 @@ plot_plane <- function(data, surface){
   ) %>%
   plotly::add_trace(
     p = .,
-    z = fit_plane_surface,
+    z = surface,
     x = axis_x1,
     y = axis_x2,
     type = "surface", 
