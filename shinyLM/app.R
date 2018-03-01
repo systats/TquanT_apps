@@ -151,7 +151,21 @@ ui <- dashboardPage(
             ribbon = F,
             collapsible = T, 
             width = 5, 
-            sliderInput("slope1", label = "slope1", min = -2, max = 2, value = 0, step =.1)
+            sliderInput("slope21", label = "Slope21", min = -2, max = 2, value = 0, step =.2),
+            sliderInput("slope22", label = "Slope21", min = -2, max = 2, value = 0, step =.2),
+            sliderInput("sigma2", label = "Sigma2", min = 0, max = 20, value = 5, step =.5),
+            br(),
+            br(),
+            checkboxGroupInput("variance", label = NULL, choices = c("resid", "model"), selected = "")
+          ),
+          box(
+            title = "Estimation", 
+            color = "red", 
+            title_side = "top", 
+            ribbon = F,
+            collapsible = T, 
+            width = 4,
+            uiOutput("ind2")
           )
         )
       )
@@ -240,16 +254,38 @@ server <- function(input, output) {
     
     x2 <- runif(100, min = 0, max = 10)
     
-    y <- as.numeric(input$slope1) * x1 + x2 + rnorm(100) 
+    y <- input$slope21 * x1 + input$slope22 * x2 + rnorm(100,  sd = input$sigma2) 
     y <- y/max(y)*10
 
     return(data.frame(x1, x2, y))
   })
   
+  ind2 <- reactive({
+    round(broom::glance(lm(y ~ x1 + x2, dat_3d()))$r.squared*100,1) %>% as.character()
+  })
+  
+  output$ind2 <- renderUI({
+    tagList(
+      div(class="ui green progress",
+          #`data-value` = "1",
+          `data-total` = "100",
+          id = "example6",
+          div(class="bar",
+              div(class="progress")
+          ),
+          div(class="label",
+              "Variance 'Explained'"
+          )
+      ),
+      tags$script(paste0("$('#example6').progress({percent:", ind2(), "});"))
+    )
+  })
+  
+  
   
   output$D3 <- plotly::renderPlotly({
     fit_plane_surface <- fit_plane(dat_3d())
-    p <- plot_plane(dat_3d(), fit_plane_surface)
+    p <- plot_plane(dat_3d(), fit_plane_surface, variance = input$variance)
     return(p)
   })
 }

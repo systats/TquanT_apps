@@ -1,0 +1,212 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(plotly)
+library(reshape2)
+library(dplyr)
+
+load("ess_workshop.Rdata")
+
+ess_ger <- ess %>%
+  filter(country == "DE")
+
+#load data
+ess_plane <- ess_ger %>%
+  select(edu, imm_econ, income) %>%
+  #mutate(imm_econ = scale(imm_econ)) %>%
+  na.omit() %>%
+  sample_n(size = 100)
+  #mutate(pol_inter = ifelse(pol_inter == "Female", 1, 0))
+
+fit_plane <- lm(income ~ 1 + edu + imm_econ, data = ess_plane)
+
+#Graph Resolution (more important for more complex shapes)
+graph_reso <- 0.05
+
+#Setup Axis
+axis_x <- seq(0, 10, by = graph_reso)
+axis_y <- seq(0, 10, by = graph_reso)
+
+#Sample points
+fit_plane_surface <- expand.grid(
+  edu = axis_x,
+  imm_econ = axis_y,
+  KEEP.OUT.ATTRS = F
+)
+
+fit_plane_surface$income <- predict.lm(fit_plane, newdata = fit_plane_surface)
+library(reshape2)
+fit_plane_surface <- acast(fit_plane_surface, imm_econ ~ edu, value.var = "income")
+
+#hcolors=c("blue", "red")[dat1$wealth]
+library(plotly)
+
+income_plot <- plot_ly(
+  ess_plane,
+  x = ~ edu,
+  y = ~ income,
+  z = ~ imm_econ,
+  #text = ~ cntry,
+  type = "scatter3d",
+  mode = "markers", width = 900, height = 700
+  #marker = list(color = hcolors)
+)
+
+income_plot2 <- add_trace(
+  p = income_plot,
+  z = fit_plane_surface,
+  x = axis_x,
+  y = axis_y,
+  type = "surface"
+)
+
+income_plot2
+```
+
+
+
+```{r}
+x1 <- runif(100, min = 0, max = 10)
+hist(x1)
+
+x2 <- runif(100, min = 0, max = 10)
+
+y <- 1 + x1 + x2 + rnorm(100) 
+y <- y/max(y)*10# %>% scale()
+
+dat <- data.frame(x1, x2, y)
+```
+
+```{r}
+fit_plane <- function(data){
+  
+  fit_plane <- lm(x2 ~ 1 + x1 + y, data = data)
+  
+  #Graph Resolution (more important for more complex shapes)
+  graph_reso <- 0.05
+  
+  #Setup Axis
+  axis_x <- seq(0, 10, by = graph_reso)
+  axis_y <- seq(min(y), max(y), by = graph_reso)
+  
+  #Sample points
+  fit_plane_surface <- expand.grid(
+    x1 = axis_x,
+    y = axis_y,
+    KEEP.OUT.ATTRS = F
+  )
+  
+  fit_plane_surface$x2 <- predict.lm(fit_plane, newdata = fit_plane_surface)
+  library(reshape2)
+  fit_plane_surface <- acast(fit_plane_surface, y ~ x1, value.var = "x2")
+  
+  return(fit_plane_surface)
+}
+
+
+fit_plane_surface <- fit_plane(dat)
+
+
+plot_plane <- function(data, surface){
+  library(plotly)
+  
+  graph_reso <- 0.05
+  axis_x <- seq(0, 10, by = graph_reso)
+  axis_y <- seq(min(y), max(y), by = graph_reso)
+  
+  
+  income_plot <- plot_ly(
+    dat,
+    x = ~ x1,
+    y = ~ y,
+    z = ~ x2,
+    #text = ~ cntry,
+    type = "scatter3d",
+    mode = "markers", width = 900, height = 700
+    #marker = list(color = hcolors)
+  )
+  
+  income_plot2 <- add_trace(
+    p = income_plot,
+    z = fit_plane_surface,
+    x = axis_x,
+    y = axis_y,
+    type = "surface"
+  )
+  return(income_plot2)
+}
+
+plot_plane(dat, fit_plane_surface)
+```
+
+
+
+
+## turn x2 and y
+
+```{r}
+fit_plane <- function(data){
+  
+  fit_plane <- lm(y ~ 1 + x1 + x2, data = data)
+  
+  #Graph Resolution (more important for more complex shapes)
+  graph_reso <- 0.05
+  
+  #Setup Axis
+  axis_x1 <- seq(0, 10, by = graph_reso)
+  axis_x2 <- seq(0, 10, by = graph_reso)
+  
+  #Sample points
+  fit_plane_surface <- expand.grid(
+    x1 = axis_x1,
+    x2 = axis_x2,
+    KEEP.OUT.ATTRS = F
+  )
+  
+  fit_plane_surface$y <- predict.lm(fit_plane, newdata = fit_plane_surface)
+  library(reshape2)
+  fit_plane_surface <- acast(fit_plane_surface, x2 ~ x1, value.var = "y")
+  
+  return(fit_plane_surface)
+}
+
+
+fit_plane_surface <- fit_plane(dat)
+
+
+plot_plane <- function(data, surface){
+  library(plotly)
+  
+  graph_reso <- 0.05
+  axis_x1 <- seq(0, 10, by = graph_reso)
+  axis_x2 <- seq(0, 10, by = graph_reso)
+  
+  
+  income_plot <- plot_ly(
+    dat,
+    x = ~ x1,
+    y = ~ x2,
+    z = ~ y,
+    #text = ~ cntry,
+    type = "scatter3d",
+    mode = "markers", width = 900, height = 700
+    #marker = list(color = hcolors)
+  )
+  
+  income_plot2 <- add_trace(
+    p = income_plot,
+    z = fit_plane_surface,
+    x = axis_x1,
+    y = axis_x2,
+    type = "surface"
+  )
+  return(income_plot2)
+}
+
+
+```
+
